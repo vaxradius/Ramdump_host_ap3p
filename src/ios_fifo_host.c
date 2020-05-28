@@ -403,18 +403,20 @@ int main(void)
 
                 // Send the ACK/STOP
                 data = AM_IOSTEST_CMD_ACK_DATA;
-
+				/*
                 if ( g_startIdx >= MAX_SIZE )
                 {
                     bDone = true;
                     data = AM_IOSTEST_CMD_STOP_DATA;
                 }
+                */
                 iom_slave_write(IOSOFFSET_WRITE_CMD, &data, 1);
 
-				am_util_stdio_printf("\niosSize = %d \n",iosSize);
+				am_util_stdio_printf("iosSize %d \n",iosSize);
 				for(int i=0 ; i < iosSize; i++)
 					am_util_stdio_printf("%x ",g_pui8RcvBuf[i]);
-				am_util_stdio_printf("\n",iosSize);
+				g_startIdx += iosSize;
+				am_util_stdio_printf("\nTotal %d\n",g_startIdx);
             }
         }
         else

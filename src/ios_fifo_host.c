@@ -335,7 +335,7 @@ int main(void)
     // Clear the terminal and print the banner.
     //
     am_util_stdio_terminal_clear();
-    am_util_stdio_printf("IOS Test Host: Waiting for at least %d bytes from the slave.", MAX_SIZE);
+    am_util_stdio_printf("IOS Test Host: Waiting for at least %d bytes from the slave.\n", MAX_SIZE);
 
 
     //
@@ -410,6 +410,11 @@ int main(void)
                     data = AM_IOSTEST_CMD_STOP_DATA;
                 }
                 iom_slave_write(IOSOFFSET_WRITE_CMD, &data, 1);
+
+				am_util_stdio_printf("\niosSize = %d \n",iosSize);
+				for(int i=0 ; i < iosSize; i++)
+					am_util_stdio_printf("%x ",g_pui8RcvBuf[i]);
+				am_util_stdio_printf("\n",iosSize);
             }
         }
         else

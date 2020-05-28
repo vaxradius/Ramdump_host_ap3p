@@ -44,19 +44,11 @@
 //! SPI:
 //!     HOST (ios_fifo_host)                    SLAVE (ios_fifo)
 //!     --------------------                    ----------------
-//!     GPIO[10] GPIO Interrupt (slave to host) GPIO[4]  GPIO interrupt
+//!     GPIO[40] GPIO Interrupt (slave to host) GPIO[4]  GPIO interrupt
 //!     GPIO[5]  IOM0 SPI SCK                   GPIO[0]  IOS SPI SCK
 //!     GPIO[7]  IOM0 SPI MOSI                  GPIO[1]  IOS SPI MOSI
 //!     GPIO[6]  IOM0 SPI MISO                  GPIO[2]  IOS SPI MISO
 //!     GPIO[11] IOM0 SPI nCE                   GPIO[3]  IOS SPI nCE
-//!     GND                                     GND
-//!
-//! I2C:
-//!     HOST (ios_fifo_host)                    SLAVE (ios_fifo)
-//!     --------------------                    ----------------
-//!     GPIO[10] GPIO Interrupt (slave to host) GPIO[4]  GPIO interrupt
-//!     GPIO[5]  IOM0 I2C SCL                   GPIO[0]  IOS I2C SCL
-//!     GPIO[6]  IOM0 I2C SDA                   GPIO[1]  IOS I2C SDA
 //!     GND                                     GND
 //! @endverbatim
 //
@@ -108,7 +100,6 @@
 
 #define     IOM_MODULE          0
 #define     USE_SPI             1   // 0 = I2C, 1 = SPI
-#define     I2C_ADDR            0x10
 // How much data to read from Slave before ending the test
 #define     MAX_SIZE            10000
 
@@ -131,7 +122,7 @@ typedef enum
 
 #define AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK  1
 
-#define HANDSHAKE_PIN            10
+#define HANDSHAKE_PIN            40
 
 //*****************************************************************************
 //
@@ -181,57 +172,14 @@ static am_hal_iom_config_t g_sIOMSpiConfig =
 
 #define MAX_SPI_SIZE    1023
 
-static am_hal_iom_config_t g_sIOMI2cConfig =
-{
-    .eInterfaceMode = AM_HAL_IOM_I2C_MODE,
-    .ui32ClockFreq  = AM_HAL_IOM_1MHZ,
-};
-
-#define MAX_I2C_SIZE   255
-
 const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_HANDSHAKE =
 {
-    .uFuncSel       = AM_HAL_PIN_10_GPIO,
+    .uFuncSel       = AM_HAL_PIN_40_GPIO,
     .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
     .eIntDir        = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
     .eGPInput       = AM_HAL_GPIO_PIN_INPUT_ENABLE,
 };
 
-//*****************************************************************************
-//
-// Clear Rx Buffer for comparison
-//
-//*****************************************************************************
-void clear_rx_buf(void)
-{
-    uint32_t i;
-    for ( i = 0; i < AM_TEST_RCV_BUF_SIZE; i++ )
-    {
-        g_pui8RcvBuf[i] = EMPTY_BYTE;
-    }
-}
-
-//*****************************************************************************
-//
-// Validate Rx Buffer
-// Returns 0 for success case
-//
-//*****************************************************************************
-uint32_t validate_rx_buf(uint32_t rxSize)
-{
-    uint32_t i;
-    for ( i = 0; i < rxSize; i++ )
-    {
-        if ( g_pui8RcvBuf[i] != (((g_startIdx + i) & 0xFF) ^ XOR_BYTE) )
-        {
-            am_util_stdio_printf("Failed to compare buffers at index %d \n", i);
-            break;
-        }
-    }
-    // Set the reference for next chunk
-    g_startIdx += rxSize;
-    return (i == rxSize);
-}
 
 // ISR callback for the host IOINT
 static void hostint_handler(void)
@@ -266,7 +214,7 @@ void am_gpio_isr(void)
 #endif
 }
 
-void iom_slave_read(bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
+void iom_slave_read(uint32_t offset, uint32_t *pBuf, uint32_t size)
 {
     am_hal_iom_transfer_t       Transaction;
 
@@ -280,18 +228,12 @@ void iom_slave_read(bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
-    if ( bSpi )
-    {
-        Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
-    }
-    else
-    {
-        Transaction.uPeerInfo.ui32I2CDevAddr = I2C_ADDR;
-    }
+    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
+
     am_hal_iom_blocking_transfer(g_IOMHandle, &Transaction);
 }
 
-void iom_slave_write(bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
+void iom_slave_write(uint32_t offset, uint32_t *pBuf, uint32_t size)
 {
     am_hal_iom_transfer_t       Transaction;
 
@@ -305,102 +247,12 @@ void iom_slave_write(bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
-    if ( bSpi )
-    {
-        Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
-    }
-    else
-    {
-        Transaction.uPeerInfo.ui32I2CDevAddr = I2C_ADDR;
-    }
+    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
+
     am_hal_iom_blocking_transfer(g_IOMHandle, &Transaction);
 }
 
-//*****************************************************************************
-//
-// Internal Helper functions
-//
-//*****************************************************************************
-#if 0
-void i2c_pins_enable(uint32_t ui32Module)
-{
-    switch(ui32Module)
-    {
-        case 0:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM0_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM0_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM0_SCL, AM_HAL_PIN_5_M0SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM0_SDA, AM_HAL_PIN_6_M0SDA | AM_HAL_GPIO_PULLUP);
-            break;
-
-        case 1:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM1_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM1_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM1_SCL, AM_HAL_PIN_8_M1SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM1_SDA, AM_HAL_PIN_9_M1SDA | AM_HAL_GPIO_PULLUP);
-            break;
-
-#ifndef AM_PART_APOLLO
-        case 2:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM2_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM2_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM2_SCL, AM_HAL_PIN_27_M2SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM2_SDA, AM_HAL_PIN_25_M2SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 3:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM3_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM3_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM3_SCL, AM_HAL_PIN_42_M3SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM3_SDA, AM_HAL_PIN_43_M3SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 4:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM4_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM4_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM4_SCL, AM_HAL_PIN_39_M4SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM4_SDA, AM_HAL_PIN_40_M4SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 5:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM5_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM5_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM5_SCL, AM_HAL_PIN_48_M5SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM5_SDA, AM_HAL_PIN_49_M5SDA | AM_HAL_GPIO_PULLUP);
-            break;
-#endif
-        //
-        // If we get here, the caller's selected IOM interface couldn't be
-        // found in the BSP GPIO definitions. Halt program execution for
-        // debugging.
-        //
-        default:
-            while (1);
-    }
-}
-#endif
-static void iom_set_up(uint32_t iomModule, bool bSpi)
+static void iom_set_up(uint32_t iomModule)
 {
     uint32_t ioIntEnable = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
 
@@ -411,30 +263,17 @@ static void iom_set_up(uint32_t iomModule, bool bSpi)
 
     am_hal_iom_power_ctrl(g_IOMHandle, AM_HAL_SYSCTRL_WAKE, false);
 
-    if ( bSpi )
-    {
-        //
-        // Set the required configuration settings for the IOM.
-        //
-        am_hal_iom_configure(g_IOMHandle, &g_sIOMSpiConfig);
 
-        //
-        // Configure the IOM pins.
-        //
-        am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
-    }
-    else
-    {
-        //
-        // Set the required configuration settings for the IOM.
-        //
-        am_hal_iom_configure(g_IOMHandle, &g_sIOMI2cConfig);
+    //
+    // Set the required configuration settings for the IOM.
+    //
+    am_hal_iom_configure(g_IOMHandle, &g_sIOMSpiConfig);
 
-        //
-        // Configure the IOM pins.
-        //
-        am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_I2C_MODE);
-    }
+    //
+    // Configure the IOM pins.
+    //
+    am_bsp_iom_pins_enable(iomModule, AM_HAL_IOM_SPI_MODE);
+
 
     //
     // Enable all the interrupts for the IOM module.
@@ -458,26 +297,7 @@ static void iom_set_up(uint32_t iomModule, bool bSpi)
 
     // Set up IOCTL interrupts
     // IOS ==> IOM
-    iom_slave_write(bSpi, IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
-}
-
-uint32_t g_ui32LastUpdate = 0;
-
-//*****************************************************************************
-//
-// Print a progress message.
-//
-//*****************************************************************************
-void update_progress(uint32_t ui32NumPackets)
-{
-    //
-    // Print a dot every 10000 packets.
-    //
-    if ( (ui32NumPackets - g_ui32LastUpdate) > 1000 )
-    {
-        am_util_stdio_printf(".");
-        g_ui32LastUpdate = ui32NumPackets;
-    }
+    iom_slave_write(IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
 }
 
 //*****************************************************************************
@@ -488,11 +308,10 @@ void update_progress(uint32_t ui32NumPackets)
 int main(void)
 {
     uint32_t iom = IOM_MODULE;
-    bool bSpi = USE_SPI;
     bool bReadIosData = false;
     bool bDone = false;
     uint32_t data;
-    uint32_t maxSize = (bSpi) ? MAX_SPI_SIZE: MAX_I2C_SIZE;
+    uint32_t maxSize = MAX_SPI_SIZE;
 
     am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_SYSCLK_MAX, 0);
 
@@ -532,18 +351,14 @@ int main(void)
     //
     // Set up the IOM
     //
-#if defined(MIKROE_1032) || defined(MIKROE_2529)
-    g_sIOMI2cConfig.ui32ClockFreq = AM_HAL_IOM_400KHZ;
-#endif
-
-    iom_set_up(iom, bSpi);
+    iom_set_up(iom);
 
     // Make sure the print is complete
     am_util_delay_ms(100);
 
     // Send the START
     data = AM_IOSTEST_CMD_START_DATA;
-    iom_slave_write(bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
+    iom_slave_write(IOSOFFSET_WRITE_CMD, &data, 1);
 
     //
     // Loop forever.
@@ -563,12 +378,12 @@ int main(void)
             am_hal_interrupt_master_set(ui32IntStatus);
             bIosInt = false;
             // Read & Clear the IOINT status
-            iom_slave_read(bSpi, IOSOFFSET_READ_INTSTAT, &data, 1);
+            iom_slave_read(IOSOFFSET_READ_INTSTAT, &data, 1);
             // We need to clear the bit by writing to IOS
             if ( data & AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK )
             {
                 data = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
-                iom_slave_write(bSpi, IOSOFFSET_WRITE_INTCLR, &data, 1);
+                iom_slave_write(IOSOFFSET_WRITE_INTCLR, &data, 1);
                 // Set bReadIosData
                 bReadIosData = true;
             }
@@ -579,30 +394,22 @@ int main(void)
                 bReadIosData = false;
 
                 // Read the Data Size
-                iom_slave_read(bSpi, IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
+                iom_slave_read(IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
                 iosSize = (iosSize > maxSize)? maxSize: iosSize;
-                // Initialize Rx Buffer for later comparison
-                clear_rx_buf();
+
                 // Read the data
-                iom_slave_read(bSpi, IOSOFFSET_READ_FIFO,
+                iom_slave_read(IOSOFFSET_READ_FIFO,
                     (uint32_t *)g_pui8RcvBuf, iosSize);
-                // Validate Content
-                if ( !validate_rx_buf(iosSize) )
-                {
-                    am_util_stdio_printf("\nData Verification failed Accum:%lu rx=%d\n",
-                        g_startIdx, iosSize);
-                }
+
                 // Send the ACK/STOP
                 data = AM_IOSTEST_CMD_ACK_DATA;
-
-                update_progress(g_startIdx);
 
                 if ( g_startIdx >= MAX_SIZE )
                 {
                     bDone = true;
                     data = AM_IOSTEST_CMD_STOP_DATA;
                 }
-                iom_slave_write(bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
+                iom_slave_write(IOSOFFSET_WRITE_CMD, &data, 1);
             }
         }
         else

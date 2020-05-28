@@ -2,7 +2,8 @@
 ;
 ;! @file startup_keil.s
 ;!
-;! @brief Definitions for Apollo3 interrupt handlers, the vector table, and the stack.
+;! @brief Definitions for Apollo3 Blue Plus interrupt handlers, the vector
+;! table, and the stack.
 ;
 ;******************************************************************************
 

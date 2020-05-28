@@ -7,23 +7,22 @@
 
   <Targets>
     <Target>
-      <TargetName>uart_boot_host</TargetName>
+      <TargetName>ios_fifo_host</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
-      <uAC6>0</uAC6>
+      <pArmCC></pArmCC>
       <TargetOption>
         <TargetCommonOption>
           <Device>AMA3B2KK-KBR</Device>
           <Vendor>Ambiq Micro</Vendor>
           <PackID>AmbiqMicro.Apollo_DFP.1.2.0</PackID>
           <PackURL>http://s3.asia.ambiqmicro.com/pack/</PackURL>
-          <Cpu>IRAM(0x10000000,0x000C0000) IROM(0x0000C000,0x001F4000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
+          <Cpu>IRAM(0x10000000,0x000C0000) IROM(0x0000C000,0x001F4000) CPUTYPE("Cortex-M4") FPU2 CLOCK(48000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD10000000 -FC4000 -FN1 -FF0Apollo3p -FS0C000 -FL01F4000 -FP0($$Device:AMA3B2KK-KBR$Flash\Apollo3p.FLM))</FlashDriverDll>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD10000000 -FC4000 -FN1 -FF0Apollo3p -FS00 -FL0200000 -FP0($$Device:AMA3B2KK-KBR$Flash\Apollo3p.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile>$$Device:AMA3B2KK-KBR$Device\Include\apollo3p.h</RegisterFile>
+          <RegisterFile>$Device:AMA3B2KK-KBR$Device\Include\apollo3p.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -39,8 +38,8 @@
           <BinPath></BinPath>
           <IncludePath></IncludePath>
           <LibPath></LibPath>
-          <RegisterFilePath></RegisterFilePath>
-          <DBRegisterFilePath></DBRegisterFilePath>
+          <RegisterFilePath>1024 BGA$Device\Include\apollo3p.h\</RegisterFilePath>
+          <DBRegisterFilePath>1024 BGA$Device\Include\apollo3p.h\</DBRegisterFilePath>
           <TargetStatus>
             <Error>0</Error>
             <ExitCodeStop>0</ExitCodeStop>
@@ -49,7 +48,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\bin\</OutputDirectory>
-          <OutputName>uart_boot_host</OutputName>
+          <OutputName>ios_fifo_host</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -82,8 +81,8 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>1</RunUserProg2>
-            <UserProg1Name>fromelf --bin --output bin\uart_boot_host.bin bin\uart_boot_host.axf</UserProg1Name>
-            <UserProg2Name>fromelf -cedrst --output bin\uart_boot_host.txt bin\uart_boot_host.axf</UserProg2Name>
+            <UserProg1Name>fromelf --bin --output bin\ios_fifo_host.bin bin\ios_fifo_host.axf</UserProg1Name>
+            <UserProg2Name>fromelf -cedrst --output bin\ios_fifo_host.txt bin\ios_fifo_host.axf</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
@@ -184,7 +183,6 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
-            <RvdsMve>0</RvdsMve>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -204,7 +202,7 @@
             <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
-            <Ir1Chk>0</Ir1Chk>
+            <Ir1Chk>1</Ir1Chk>
             <Ir2Chk>0</Ir2Chk>
             <Ra1Chk>0</Ra1Chk>
             <Ra2Chk>0</Ra2Chk>
@@ -325,7 +323,6 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
-            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -338,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3P keil</Define>
               <Undefine></Undefine>
-              <IncludePath>../../../../../utils;../../../../../CMSIS/ARM/Include;../../../bsp;../src;../../../../../mcu/apollo3p;../../../../..;../../../../../devices;../../../../../CMSIS/AmbiqMicro/Include</IncludePath>
+              <IncludePath>../../../../../CMSIS/ARM/Include;../../../../../mcu/apollo3p;../../../../..;../../../bsp;../../../../../CMSIS/AmbiqMicro/Include;../../../../../devices;../src;../../../../../utils</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -369,10 +366,10 @@
             <TextAddressRange></TextAddressRange>
             <DataAddressRange></DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\uart_boot_host.sct</ScatterFile>
+            <ScatterFile>.\linker_script.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>../../../../../mcu/apollo3p/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data)</Misc>
+            <Misc>../../../../../mcu/apollo3p/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data) </Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -383,14 +380,9 @@
           <GroupName>src</GroupName>
           <Files>
             <File>
-              <FileName>uart_boot_host.c</FileName>
+              <FileName>ios_fifo_host.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../src/uart_boot_host.c</FilePath>
-            </File>
-            <File>
-              <FileName>img_data.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\src\img_data.s</FilePath>
+              <FilePath>../src/ios_fifo_host.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -401,11 +393,6 @@
               <FileName>am_util_delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>../../../../../utils/am_util_delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>am_util_faultisr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../../../../../utils/am_util_faultisr.c</FilePath>
             </File>
             <File>
               <FileName>am_util_stdio.c</FileName>
@@ -428,14 +415,14 @@
           <GroupName>lib</GroupName>
           <Files>
             <File>
-              <FileName>libam_hal.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>../../../../../mcu/apollo3p/hal/keil/bin/libam_hal.lib</FilePath>
-            </File>
-            <File>
               <FileName>libam_bsp.lib</FileName>
               <FileType>4</FileType>
               <FilePath>../../../bsp/keil/bin/libam_bsp.lib</FilePath>
+            </File>
+            <File>
+              <FileName>libam_hal.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>../../../../../mcu/apollo3p/hal/keil/bin/libam_hal.lib</FilePath>
             </File>
           </Files>
         </Group>
@@ -450,3 +437,4 @@
   </RTE>
 
 </Project>
+
